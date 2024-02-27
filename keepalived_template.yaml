@@ -1,0 +1,63 @@
+zabbix_export:
+  version: '6.0'
+  date: '2024-02-27T18:30:53Z'
+  groups:
+    -
+      uuid: c1baa1c5c09b4b548b2cc0ef0534d220
+      name: Keepalived
+  templates:
+    -
+      uuid: 0ccc27dbf4ed4719a96e885421a375dc
+      template: Keepalived
+      name: Keepalived
+      groups:
+        -
+          name: Keepalived
+      items:
+        -
+          uuid: 0dd75ced064944a1a0b5d324ab5f1166
+          name: 'Keepalived: process count'
+          key: 'proc.num[keepalived]'
+          history: 30d
+          triggers:
+            -
+              uuid: 026b2fe4d7464bb7b5b89a3bf933893f
+              expression: 'last(/Keepalived/proc.num[keepalived])<=1'
+              recovery_mode: RECOVERY_EXPRESSION
+              recovery_expression: 'last(/Keepalived/proc.num[keepalived])>=2'
+              name: 'Keepalived: not running'
+              priority: HIGH
+              manual_close: 'YES'
+      discovery_rules:
+        -
+          uuid: 08642b774a114e1da2efb5e0b716ffb5
+          name: 'Keepalived: virtual address discovery'
+          key: 'keepalived.addr.discovery[/etc/keepalived/keepalived.conf]'
+          item_prototypes:
+            -
+              uuid: a92db9c247b64cfd9d625102c6e3c2d8
+              name: 'Keepalived: virtual address $1 status'
+              key: 'keepalived.addr.availability[{#KADDR}]'
+              history: 30d
+              valuemap:
+                name: status
+              trigger_prototypes:
+                -
+                  uuid: 16a34767261f46049ce4817e47d9784a
+                  expression: 'last(/Keepalived/keepalived.addr.availability[{#KADDR}]) <> last(/Keepalived/keepalived.addr.availability[{#KADDR}],#2)'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Keepalived/keepalived.addr.availability[{#KADDR}]) = last(/Keepalived/keepalived.addr.availability[{#KADDR}],#2)'
+                  name: 'Keepalived: virtual address changed'
+                  priority: HIGH
+                  manual_close: 'YES'
+      valuemaps:
+        -
+          uuid: 7f90252c9bf844adb3f0aa3f4fd9e3d0
+          name: status
+          mappings:
+            -
+              value: '1'
+              newvalue: Up
+            -
+              value: '0'
+              newvalue: 'Not present'
